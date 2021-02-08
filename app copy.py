@@ -7,7 +7,6 @@ flask run
 from flask_restful import Api
 from flask import Flask, request, Response
 from flask_cors import CORS
-from flask import render_template  # New in HW02
 
 import db
 from views import posts, comments
@@ -17,20 +16,10 @@ CORS(app)
 db.init_database_connection(app)
 api = Api(app)
 
-########################### New in HW02
+# connect your routes to your app:
 @app.route('/')
-def list_posts():
-    return render_template('get-posts.html')
-
-@app.route('/add-post/')
-def create_post():
-    return render_template('create-post.html')
-
-@app.route('/post/')
-def get_single_post():
-    return render_template('post-detail.html')
-########################### End New in HW02
-
+def home_page():
+    return 'This is your API Homepage'
 
 # routes from other files:
 posts.initialize_routes(api)
