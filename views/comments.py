@@ -7,46 +7,54 @@ import json
 
 class CommentListEndpoint(Resource):
 
+    def queryset_to_serialized_list(self, queryset):
+        serialized_list = [
+            item.to_dict() for item in queryset
+        ]
+        return serialized_list
+
     def get(self):
         keyword = request.args.get('keyword')
         if keyword:
             # find data where *any of the fields contain the term...
-            data = models.Post.objects.filter(
-                Q(title__icontains=keyword) |
-                Q(content__icontains=keyword) |
-                Q(author__icontains=keyword)
+            data = models.Comment.objects.filter(
+                Q(contenticontains=keyword) |
+                Q(authoricontains=keyword) |
+                Q(post_id_icontains=keyword)
             )
         else:
-            data = models.Post.objects
+            data = models.Comment.objects
 
         # formatting the output JSON
         data = self.queryset_to_serialized_list(data)
-        return Response(json.dumps([]), mimetype="application/json", status=200)
+        return Response(json.dumps(data), mimetype="application/json", status=200)
+
 
     def post(self):
         body = request.get_json()
-        post = models.Post(**body).save()
+        comment = models.Comment(**body).save()
+        # print(post_id)
         serialized_data = {
-            'id': str(post.id),
-            'message': 'Post {0} successfully created.'.format(post.id)
+            'id': str(comment.id),
+            'message': 'Comment {0} successfully created.'.format(comment.id)
         }
-        return Response(json.dumps([]), mimetype="application/json", status=201)
+        return Response(json.dumps([serialized_data]), mimetype="application/json", status=201)
 
 
 class CommentDetailEndpoint(Resource):
     def put(self, id):
         # body = request.get_json()
-        post = models.Post.objects.get(id=id)
+        post = models.Comment.objects.get(id=id)
         request_data = request.get_json()
-        post.title = request_data.get('title')
-        post.content = request_data.get('content')
+        post.post_id = request_data.get('post_id')
+        post.content = request_data.get('comment')
         post.author = request_data.get('author')
         post.save()
         print(post.to_json())
         return Response(json.dumps([]), mimetype="application/json", status=200)
 
     def delete(self, id):
-        post = models.Post.objects.get(id=id)
+        post = models.Comment.objects.get(id=id)
         post.delete()
         serialized_data = {
             'message': 'Post {0} successfully deleted.'.format(id)
@@ -54,7 +62,7 @@ class CommentDetailEndpoint(Resource):
         return Response(json.dumps([]), mimetype="application/json", status=200)
 
     def get(self, id):
-        post = models.Post.objects.get(id=id)
+        post = models.Comment.objects.get(id=id)
         return Response(json.dumps([]), mimetype="application/json", status=200)
 
 

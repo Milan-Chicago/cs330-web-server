@@ -1,7 +1,13 @@
+
+// quering the posts (postman)  //
 const getPosts = () => {
+    // alert('fetching request from the API Endpoint');
     fetch('/api/posts')
-        .then(response => response.json())
-        .then(displayPosts);
+        .then(response => {
+            // alert('Got the request back. Now loading the request body.');
+            return response.json();
+        })
+        .then(displayPosts);  // callback function //
 };
 
 const toHTMLElement = (post) => {
@@ -28,12 +34,19 @@ const toHTMLElement = (post) => {
     `;
 };
 
+// function - looping through each post creating an html of each post //
+
 const displayPosts = (data) => {
+    console.log(data);
+    // alert('Now I\'m building the HTML representation of the data.')
     const entries = [];
     for (const post of data) {
         entries.push(toHTMLElement(post));
     }
+    // going to find the document - injection//
+    console.log(entries);
     document.querySelector('#posts').innerHTML = entries.join('\n');
 };
 
+// starts the process to fire away to get the posts //
 getPosts();

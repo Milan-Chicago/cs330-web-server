@@ -29,14 +29,15 @@ class Post(Document):
 class Comment(Document):
     comment = StringField(required=True)
     author = StringField(required=True, max_length=50)
-    post = ReferenceField('Post', reverse_delete_rule=CASCADE)
+    post_id = ReferenceField('Post', reverse_delete_rule=CASCADE)
+
 
     def to_dict(self, path=None):
         d = {
             "id": str(self.pk),
             "comment": self.comment,
             "author": self.author,
-            "post_id": str(self.post.pk)
+            "post_id": str(self.post_id.pk)
         }
         if path:
             server_url = path + str(self.pk) + '/'
@@ -44,7 +45,7 @@ class Comment(Document):
                 'url': server_url
             })
         return d
-    
+
     def to_json(self, path=None):
         return json.dumps(self.to_dict())
 
@@ -54,4 +55,3 @@ class Comment(Document):
 #     name = StringField(required=True, unique=True)
 #     casts = ListField(StringField(), required=True)
 #     genres =ListField(StringField(), required=True)
-        

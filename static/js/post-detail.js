@@ -1,6 +1,7 @@
 
 let activePost;
-
+let activeComment;
+let temp;
 // gets post from the server:
 const getPost = () => {
     // get post id from url address:
@@ -16,6 +17,19 @@ const getPost = () => {
             renderPost();
         });
 };
+
+const getComments = () => {
+    const url = window.location.href;
+    id = url.substring(url.lastIndexOf('#') + 1);
+    fetch('/api/comments/#' + id)
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            activeComment = data;
+            displayComments();
+                });
+};
+
 
 // updates the post:
 const updatePost = (ev) => {
@@ -43,6 +57,28 @@ const updatePost = (ev) => {
     ev.preventDefault();
 };
 
+const addComment = (ev) => {
+    const url = window.location.href;
+    id = url.substring(url.lastIndexOf('#') + 1);
+
+    const data = {
+        post_id: id,
+        comment: document.querySelector('#comment').value,
+        author: document.querySelector('#author').value
+    };
+    // console.log(data);
+    fetch('/api/comments/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(getComments())
+        .then(showConfirmation);
+};
+
 const deletePost = (ev) => {
     const doIt = confirm('Are you sure you want to delete this blog post?');
     if (!doIt) {
@@ -63,6 +99,24 @@ const deletePost = (ev) => {
     ev.preventDefault()
 };
 
+
+const deleteComments = (c_id) => {
+    const doIt = confirm('Are you sure you want to delete this comment?');
+    if (!doIt) {
+        return;
+    }
+    fetch('/api/comments/' + c_id + '/', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        getComments();
+    });
+};
+
 // creates the HTML to display the post:
 const renderPost = (ev) => {
     const paragraphs = '<p>' + activePost.content.split('\n').join('</p><p>') + '</p>';
@@ -80,6 +134,24 @@ const renderPost = (ev) => {
 
     // prevent built-in form submission:
     if (ev) { ev.preventDefault(); }
+};
+
+const displayComments = () => {
+    let theHTML = '';
+    comments_list = activeComment.map((comment) => {
+        const sentences = '<p>' + comment.comment.split('\n').join('</p><p>') + '</p>';
+        theHTML = `
+        <div>${sentences}</div>
+        <div>
+            <strong>Author: </strong>${comment.author}
+            <i class="btn fas fa-trash-alt" style="float: right;" onClick="deleteComments('${comment.id}');"></i>
+        </div>
+        `;
+        return theHTML
+    });
+
+    document.querySelector('.comments').innerHTML = comments_list.join('\n');
+
 };
 
 // creates the HTML to display the editable form:
@@ -108,6 +180,29 @@ const renderForm = () => {
     toggleVisibility('edit');
 };
 
+// Form where users can write comments and submit
+const renderCommentForm = () => {
+    const htmlSnippet = `
+        <div class="input-section">
+            <label for="author">Author</label>
+            <input type="text" name="author" id="author" value="Milan">
+        </div>
+        <div class="input-section">
+            <label for="content">Content</label>
+            <textarea name="comment" id="comment"></textarea>
+        </div>
+        <button class="btn btn-main" id="save-comment" type="submit">Save</button>
+        <button class="btn" id="cancel-comment" type="submit">Cancel</button>
+    `;
+
+    // after you've updated the DOM, add the event handlers:
+    document.querySelector('#comments-form').innerHTML = htmlSnippet;
+    document.querySelector('#save-comment').onclick = addComment;
+    document.querySelector('#cancel-comment').onclick = getComments;
+    console.log("HI");
+    toggleVisibility('edit-comments');
+};
+
 const formatDate = (date) => {
     const options = { 
         weekday: 'long', year: 'numeric', 
@@ -122,10 +217,14 @@ const toggleVisibility = (mode) => {
         document.querySelector('#view-post').classList.remove('hide');
         document.querySelector('#menu').classList.remove('hide');
         document.querySelector('#post-form').classList.add('hide');
+        document.querySelector('#comments-form').classList.add('hide');
+    } else if (mode === "edit-comments") {
+        document.querySelector('#comments-form').classList.remove('hide');
     } else {
         document.querySelector('#view-post').classList.add('hide');
         document.querySelector('#menu').classList.add('hide');
         document.querySelector('#post-form').classList.remove('hide');
+        // document.querySelector('#comments-form').classList.add('hide');
     }
 };
 
@@ -138,9 +237,12 @@ const showConfirmation = () => {
 const initializePage = () => {
     // get the post from the server:
     getPost();
+    getComments();
     // add button event handler (right-hand corner:
     document.querySelector('#edit-button').onclick = renderForm;
     document.querySelector('#delete-button').onclick = deletePost;
+    document.querySelector('#add-comment-button').onclick = renderCommentForm;
+
 };
 
 initializePage();
